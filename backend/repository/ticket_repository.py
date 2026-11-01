@@ -1,28 +1,29 @@
 from uuid import UUID
+from repository import Repository
 from models.ticket import Ticket
 
-class TicketRepository:
+class TicketRepository(Repository[Ticket, UUID]):
     def __init__(self):
         self.tickets = dict[UUID, Ticket]()
 
-    def store(self, incoming_ticket: Ticket):
-        self.tickets[incoming_ticket.ticket_id] = incoming_ticket
+    def store(self, incoming_item: Ticket):
+        self.tickets[incoming_item.ticket_id] = incoming_item
 
-    def get_ticket(self, ticket_id: UUID) -> Ticket:
+    def get_item(self, item_id: UUID) -> Ticket:
         try:
-            return self.tickets[ticket_id]
+            return self.tickets[item_id]
         except KeyError:
-            raise KeyError(f"Ticket with ID {ticket_id} not found.")
+            raise KeyError(f"Ticket with ID {item_id} not found.")
 
-    def update_ticket(self, ticket_id: UUID, updated_ticket: Ticket):
-        self.tickets[ticket_id] = updated_ticket
-        return self.tickets[ticket_id]
+    def update_item(self, item_id: UUID, updated_item: Ticket):
+        self.tickets[item_id] = updated_item
+        return self.tickets[item_id]
 
-    def delete_ticket(self, ticket_id: UUID) -> Ticket:
+    def delete_item(self, item_id: UUID) -> Ticket:
         try:
-            return self.tickets.pop(ticket_id)
+            return self.tickets.pop(item_id)
         except KeyError:
-            raise KeyError(f"Ticket with ID {ticket_id} not found.")
+            raise KeyError(f"Ticket with ID {item_id} not found.")
 
-    def get_all_tickets (self) -> list[Ticket]:
+    def get_all_items(self) -> list[Ticket]:
         return list(self.tickets.values())
