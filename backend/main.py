@@ -1,10 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from models.ticket import *
-from repository.ticket_repository import TicketRepository
+from service.ticket_service import *
 from uuid import UUID
 
 app = FastAPI()
-repo = TicketRepository() # Always restarts on startup. Server instances will always have different repos
+
 
 @app.get("/health")
 def health_check():
@@ -12,15 +12,12 @@ def health_check():
 
 @app.post("/create-ticket", status_code=201)
 def create_ticket(incoming_ticket: ClientTicket) -> Ticket:
-    response_ticket = Ticket(**incoming_ticket.model_dump()) # Append a proper UUID
-    repo.store(response_ticket)
-    return response_ticket
+    return create_ticket(incoming_ticket)
 
 @app.delete("/delete-ticket")
 def delete_ticket(ticket_id: UUID) -> Ticket:
     try:
-        deleted_ticket = repo.delete_item(ticket_id)
-        return deleted_ticket
+        return delete_ticket(ticket_id)
     except KeyError as e:
         raise HTTPException(status_code=404, detail=f"Error in deleting a ticket: {str(e)}")
 

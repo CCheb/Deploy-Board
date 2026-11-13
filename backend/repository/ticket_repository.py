@@ -1,8 +1,7 @@
 from uuid import UUID
-from repository import Repository
 from models.ticket import Ticket
 
-class TicketRepository(Repository[Ticket, UUID]):
+class TicketRepository():
     def __init__(self):
         self.tickets = dict[UUID, Ticket]()
 
