@@ -24,19 +24,17 @@ def delete_ticket(ticket_id: UUID) -> Ticket:
 @app.put("/update-ticket")
 def update_ticket(ticket_id: UUID, updated_ticket: Ticket) -> Ticket:
     try:
-        updated_ticket = repo.update_item(ticket_id, updated_ticket)
-        return updated_ticket
+        return update_ticket(ticket_id, updated_ticket)
     except KeyError as e:
         raise HTTPException(status_code=404, detail=f"Error in updating a ticket: {str(e)}")
 
 @app.get("/get-ticket/{ticket_id}")
 def get_ticket(ticket_id: UUID) -> Ticket:
     try: 
-        ticket = repo.get_item(ticket_id)
-        return ticket
+        return get_ticket(ticket_id)
     except KeyError as e:
         raise HTTPException(status_code=404, detail=f"Error in getting a ticket: {str(e)}")
 
 @app.get("/get-all-tickets")
 def get_all_tickets() -> list[Ticket]:
-    return repo.get_all_items()
+    return get_all_tickets()
