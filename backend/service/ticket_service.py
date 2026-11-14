@@ -19,10 +19,14 @@ def delete_ticket(ticket_id: UUID) -> Ticket:
         raise KeyError(f"Error in deleting a ticket: {str(e)}")
 
 
-def update_ticket(ticket_id: UUID, updated_ticket: Ticket):
+def update_ticket(ticket_id: UUID, incoming_ticket: ClientTicket):
     try:
-        updated_ticket = repo.update_item(ticket_id, updated_ticket)
-        return updated_ticket
+        # Now we dont run into the issue where we pass an incoming_incoming ticket with a different UUID
+        updated_ticket = Ticket(    
+            ticket_id=ticket_id,
+            **incoming_ticket.model_dump()
+        )
+        return repo.update_item(ticket_id, updated_ticket)
     except KeyError as e:
         raise KeyError(f"Error in updating a ticket: {str(e)}")
 

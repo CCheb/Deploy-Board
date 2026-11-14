@@ -5,7 +5,6 @@ Since both modules are tightly coupled and simple in designed, its worth to test
 import pytest
 
 from service import ticket_service
-from service.ticket_service import *
 from models.ticket import *
 from datetime import date
 from repository.ticket_repository import TicketRepository
@@ -39,17 +38,23 @@ def mock_client_ticket():
 # Act and Assert are handled in the test functions below.
 
 def test_ticket_creation_passes(mock_ticket_repo, mock_client_ticket):
-    response_ticket = create_ticket(mock_client_ticket)
+    response_ticket = ticket_service.create_ticket(mock_client_ticket)
     stored_ticket = mock_ticket_repo.get_item(response_ticket.ticket_id)
 
     check_for_proper_ticket(response_ticket)
     check_two_tickets_are_equal(response_ticket, stored_ticket)
 
+def test_create_ticket_generates_unique_uuid(mock_ticket_repo, mock_client_ticket):
+    ticket1 = ticket_service.create_ticket(mock_client_ticket)
+    ticket2 = ticket_service.create_ticket(mock_client_ticket)
+
+    check_two_tickets_dont_have_equal_uuid(ticket1, ticket2)
+
 # No test_ticket_creation_fails since pydantic is already handling model validation
 
 def test_ticket_deletion_passes(mock_ticket_repo, mock_client_ticket):
-    response_ticket = create_ticket(mock_client_ticket)
-    deleted_ticket = delete_ticket(response_ticket.ticket_id)
+    response_ticket = ticket_service.create_ticket(mock_client_ticket)
+    deleted_ticket = ticket_service.delete_ticket(response_ticket.ticket_id)
 
     check_for_proper_ticket(deleted_ticket)
     check_two_tickets_are_equal(response_ticket, deleted_ticket)
@@ -60,18 +65,27 @@ def test_ticket_deletion_passes(mock_ticket_repo, mock_client_ticket):
 
 def test_ticket_deletion_fails(mock_ticket_repo):
     non_existing_ticket_id : UUID = uuid4() # in UUID format
-    with pytest.raises(KeyError):
-        delete_ticket(non_existing_ticket_id)
 
     with pytest.raises(KeyError):
-        mock_ticket_repo.get_item(non_existing_ticket_id)
+        ticket_service.delete_ticket(non_existing_ticket_id)
+
+
+def test_ticket_deletion_leaves_other_ticket_untouched(mock_ticket_repo, mock_client_ticket):
+    ticket1 = ticket_service.create_ticket(mock_client_ticket)
+    ticket2 = ticket_service.create_ticket(mock_client_ticket)
+
+    ticket_service.delete_ticket(ticket1.ticket_id)
+    with pytest.raises(KeyError):
+        mock_ticket_repo.get_item(ticket1.ticket_id)
+
+    retrieved_ticket2 = mock_ticket_repo.get_item(ticket2.ticket_id)
+    check_two_tickets_are_equal(ticket2, retrieved_ticket2)
 
 
 def test_ticket_update_passes(mock_ticket_repo, mock_client_ticket):
-    response_ticket = create_ticket(mock_client_ticket)
+    response_ticket = ticket_service.create_ticket(mock_client_ticket)
 
-    updated_ticket = Ticket(
-        ticket_id=response_ticket.ticket_id,
+    updated_ticket = ClientTicket(
         title="Updated Test Ticket",
         description="This is an updated test ticket.",
         start_date=date.today(),
@@ -80,7 +94,7 @@ def test_ticket_update_passes(mock_ticket_repo, mock_client_ticket):
         priority_level="High"
     )
 
-    updated_response_ticket = update_ticket(response_ticket.ticket_id, updated_ticket)
+    updated_response_ticket = ticket_service.update_ticket(response_ticket.ticket_id, updated_ticket)
     stored_updated_ticket = mock_ticket_repo.get_item(response_ticket.ticket_id)
 
     check_for_proper_ticket(updated_response_ticket)
@@ -92,15 +106,31 @@ def test_ticket_update_fails(mock_ticket_repo, mock_client_ticket):
     non_existing_ticket_id : UUID = uuid4() # in UUID format
 
     with pytest.raises(KeyError):
-        update_ticket(non_existing_ticket_id, mock_client_ticket)
+        ticket_service.update_ticket(non_existing_ticket_id, mock_client_ticket)
 
     with pytest.raises(KeyError):
         mock_ticket_repo.get_item(non_existing_ticket_id)
 
 
+def test_ticket_update_preserves_uuid(mock_ticket_repo, mock_client_ticket):
+    response_ticket = ticket_service.create_ticket(mock_client_ticket)
+    
+    updated_ticket = ClientTicket(
+        title="Updated Test Ticket",
+        description="This is an updated test ticket.",
+        start_date=date.today(),
+        due_date=date.today(),
+        current_stage="In Progress",
+        priority_level="High"
+    )
+    
+    updated_response_ticket = ticket_service.update_ticket(response_ticket.ticket_id, updated_ticket)
+    check_two_tickets_have_equal_uuid(response_ticket, updated_response_ticket)
+
+
 def test_get_ticket_passes(mock_ticket_repo, mock_client_ticket):
-    response_ticket = create_ticket(mock_client_ticket)
-    retrieved_ticket = get_ticket(response_ticket.ticket_id)
+    response_ticket = ticket_service.create_ticket(mock_client_ticket)
+    retrieved_ticket = ticket_service.get_ticket(response_ticket.ticket_id)
 
     check_for_proper_ticket(retrieved_ticket)
     check_two_tickets_are_equal(response_ticket, retrieved_ticket)
@@ -110,18 +140,15 @@ def test_get_ticket_fails(mock_ticket_repo):
     non_existing_ticket_id : UUID = uuid4() # in UUID format
 
     with pytest.raises(KeyError):
-        get_ticket(non_existing_ticket_id)
-
-    with pytest.raises(KeyError):
-        mock_ticket_repo.get_item(non_existing_ticket_id)
+        ticket_service.get_ticket(non_existing_ticket_id)
 
 
 def test_get_all_tickets_passes(mock_ticket_repo, mock_client_ticket):
     num_of_tickets_to_create = 2
 
-    response_tickets = [create_ticket(mock_client_ticket) for _ in range(num_of_tickets_to_create)]  # Create two tickets
+    response_tickets = [ticket_service.create_ticket(mock_client_ticket) for _ in range(num_of_tickets_to_create)]  # Create two tickets
 
-    all_tickets = get_all_tickets()
+    all_tickets = ticket_service.get_all_tickets()
 
     assert len(all_tickets) == num_of_tickets_to_create
     assert mock_ticket_repo.get_all_items() == all_tickets  # Ensure the repository has the same tickets
@@ -132,9 +159,8 @@ def test_get_all_tickets_passes(mock_ticket_repo, mock_client_ticket):
 
     
 def test_get_all_tickets_empty(mock_ticket_repo):
-    all_tickets = get_all_tickets()
+    all_tickets = ticket_service.get_all_tickets()
     assert len(all_tickets) == 0
-
 
 def check_for_proper_ticket(ticket: Ticket):
     assert isinstance(ticket.ticket_id, UUID)
@@ -153,3 +179,9 @@ def check_two_tickets_are_equal(ticket1: Ticket, ticket2: Ticket):
 
 def check_two_tickets_are_not_equal(ticket1: Ticket, ticket2: Ticket):
     assert ticket1 != ticket2
+
+def check_two_tickets_have_equal_uuid(ticket1: Ticket, ticket2: Ticket):
+    assert ticket1.ticket_id == ticket2.ticket_id
+
+def check_two_tickets_dont_have_equal_uuid(ticket1: Ticket, ticket2: Ticket):
+    assert ticket1.ticket_id != ticket2.ticket_id

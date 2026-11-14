@@ -1,5 +1,5 @@
 from uuid import UUID
-from models.ticket import Ticket
+from models.ticket import Ticket, ClientTicket
 
 class TicketRepository():
     def __init__(self):
