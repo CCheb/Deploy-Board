@@ -4,10 +4,24 @@ Small Full-Stack application with an emphasis on CI/CD pipelines
 
 ## Startup
 **Backend**
+Linux/macOS
 ```bash
 cd ./backend
 
 uv sync
 
-uvicorn main:app ---reload
+source ./.venv/bin/activate # If not already in .venv
+
+uvicorn main:app --reload
+```  
+
+Windows
+```powershell
+cd .\backend
+
+uv sync
+
+source .\.venv\Scripts\activate # If not already in .venv
+
+uvicorn main:app --reload
 ```  
