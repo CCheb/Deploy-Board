@@ -33,6 +33,7 @@ jobs:
         uv sync
     - name: Ensure in .venv
       run: |
+        pwd
         source ./.venv/bin/activate
         which python
     - name: Test with pytest
