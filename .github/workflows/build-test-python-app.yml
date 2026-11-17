@@ -33,9 +33,10 @@ jobs:
         uv sync
     - name: Ensure in .venv
       run: |
-        pwd
+        cd ./backend
         source ./.venv/bin/activate
         which python
     - name: Test with pytest
       run: |
+        cd ./backend
         pytest
