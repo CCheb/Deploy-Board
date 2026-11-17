@@ -10,6 +10,7 @@ cd ./backend
 
 uv sync
 
+<<<<<<< HEAD
 source ./.venv/bin/activate # If not already in .venv
 
 uvicorn main:app --reload
@@ -25,3 +26,7 @@ source .\.venv\Scripts\activate # If not already in .venv
 
 uvicorn main:app --reload
 ```  
+=======
+uvicorn main:app ---reload
+```
+>>>>>>> main
