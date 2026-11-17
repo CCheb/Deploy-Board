@@ -31,12 +31,9 @@ jobs:
         pip install uv
         cd ./backend
         uv sync
-    - name: Ensure in .venv
-      run: |
-        cd ./backend
-        source ./.venv/bin/activate
-        which python
     - name: Test with pytest
       run: |
+        which uv
         cd ./backend
+        source ./.venv/bin/activate
         pytest
